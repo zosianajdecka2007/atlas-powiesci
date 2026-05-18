@@ -48,6 +48,23 @@ export function AuthScreen({ mode, onModeChange }: AuthScreenProps) {
     }
   };
 
+  const signInWithProvider = async (provider: "google") => {
+    setMessage("");
+    if (!supabase) {
+      setMessage("Dodaj NEXT_PUBLIC_SUPABASE_URL i NEXT_PUBLIC_SUPABASE_ANON_KEY w .env.local.");
+      return;
+    }
+
+    const { error } = await supabase.auth.signInWithOAuth({
+      provider,
+      options: {
+        redirectTo: window.location.origin
+      }
+    });
+
+    if (error) setMessage(error.message);
+  };
+
   return (
     <main className="grid min-h-screen place-items-center bg-paper px-5 text-ink dark:bg-[#141414] dark:text-paper">
       <section className="w-full max-w-md rounded-lg border border-ink/10 bg-porcelain p-6 shadow-soft dark:border-paper/10 dark:bg-[#1b1b1b]">
@@ -104,6 +121,21 @@ export function AuthScreen({ mode, onModeChange }: AuthScreenProps) {
         >
           {loading ? "Chwila..." : mode === "login" ? "Zaloguj" : "Utwórz konto"}
         </button>
+
+        <div className="my-5 flex items-center gap-3">
+          <div className="h-px flex-1 bg-ink/10 dark:bg-paper/10" />
+          <span className="text-xs text-ink/40 dark:text-paper/40">albo</span>
+          <div className="h-px flex-1 bg-ink/10 dark:bg-paper/10" />
+        </div>
+
+        <div className="grid gap-2">
+          <button
+            onClick={() => signInWithProvider("google")}
+            className="rounded-lg border border-ink/10 bg-white px-4 py-2.5 text-sm transition hover:border-wine hover:text-wine dark:border-paper/10 dark:bg-[#242424]"
+          >
+            Kontynuuj z Google
+          </button>
+        </div>
 
         <button
           onClick={() => onModeChange(mode === "login" ? "register" : "login")}

@@ -23,12 +23,19 @@ import {
   Sun,
   Tags,
   UsersRound,
-  AlertTriangle
+  AlertTriangle,
+  GitBranch,
+  Clock3,
+  Heart,
+  MapPin,
+  EyeOff
 } from "lucide-react";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { DetailsSidebar } from "@/components/details-sidebar";
+import { FamilyView } from "@/components/family-view";
 import { NodeDetailLargeView } from "@/components/node-detail-large-view";
 import { ProjectConsistencyView } from "@/components/project-consistency-view";
+import { RelationshipProfilePanel } from "@/components/relationship-profile-panel";
 import { StoryNodeCard } from "@/components/story-node-card";
 import { ToolbarButton } from "@/components/toolbar-button";
 import { autosaveProject, loadLocalProject } from "@/lib/autosave";
@@ -103,7 +110,9 @@ export function BookWorkspace({
   const [saveState, setSaveState] = useState<"idle" | "saving" | "saved">("idle");
   const [editMode, setEditMode] = useState<"small" | "large">("small");
   const [largeViewOpen, setLargeViewOpen] = useState(false);
-  const [viewMode, setViewMode] = useState<"map" | "relationships" | "consistency">("map");
+  const [viewMode, setViewMode] = useState<
+    "map" | "plot" | "characters" | "relationships" | "family" | "timeline" | "romance" | "secrets" | "locations" | "consistency"
+  >("map");
   const [selectedEdgeId, setSelectedEdgeId] = useState<string | null>(null);
 
   useEffect(() => {
@@ -295,6 +304,25 @@ export function BookWorkspace({
     [nodes]
   );
 
+  const updateRelationship = useCallback((relationshipId: string, patch: Partial<NonNullable<StoryNodeData["relationships"]>[number]>) => {
+    const now = new Date().toISOString();
+    setNodes((current) =>
+      current.map((node) => {
+        const hasRelationship = node.data.relationships?.some((relationship) => relationship.id === relationshipId);
+        return {
+          ...node,
+          data: {
+            ...node.data,
+            relationships: node.data.relationships?.map((relationship) =>
+              relationship.id === relationshipId ? { ...relationship, ...patch, updatedAt: now } : relationship
+            ),
+            updatedAt: hasRelationship ? now : node.data.updatedAt
+          }
+        };
+      })
+    );
+  }, []);
+
   const addChildNode = useCallback(
     (parentId?: string, explicitType: NodeType = "Notatka") => {
       const parent = nodes.find((node) => node.id === (parentId ?? selectedNodeId));
@@ -359,7 +387,16 @@ export function BookWorkspace({
     const normalizedSearch = search.toLowerCase().trim();
     const normalizedTag = tagFilter.toLowerCase().trim();
 
-    const baseNodes = viewMode === "relationships" ? nodes.filter((node) => node.data.type === "Postać") : nodes;
+    const baseNodes = nodes.filter((node) => {
+      if (viewMode === "relationships" || viewMode === "characters" || viewMode === "family" || viewMode === "romance") {
+        return node.data.type === "Postać";
+      }
+      if (viewMode === "plot") return ["Fabuła", "Rozdział", "Scena", "Motyw", "Tajemnica"].includes(node.data.type);
+      if (viewMode === "timeline") return node.data.type === "Timeline" || node.data.type === "Rozdział" || node.data.type === "Scena";
+      if (viewMode === "secrets") return ["Tajemnica", "Sekret"].includes(node.data.type) || node.data.tags.some((tag) => tag.toLowerCase().includes("sekret"));
+      if (viewMode === "locations") return node.data.type === "Lokacja" || node.data.type === "Świat";
+      return true;
+    });
 
     return baseNodes
       .filter((node) => !hiddenIds.has(node.id))
@@ -391,10 +428,17 @@ export function BookWorkspace({
       edges
         .filter((edge) => !hiddenIds.has(edge.source) && !hiddenIds.has(edge.target))
         .filter((edge) => {
-          if (viewMode !== "relationships") return true;
+          if (viewMode !== "relationships" && viewMode !== "romance" && viewMode !== "family") return true;
           const source = nodes.find((node) => node.id === edge.source);
           const target = nodes.find((node) => node.id === edge.target);
-          return source?.data.type === "Postać" && target?.data.type === "Postać";
+          if (!(source?.data.type === "Postać" && target?.data.type === "Postać")) return false;
+          if (viewMode === "romance") {
+            return ["partner", "ex", "crush", "love interest", "situationship", "forbidden relationship", "emotionally dependent"].includes(String(edge.label));
+          }
+          if (viewMode === "family") {
+            return ["matka", "ojciec", "córka", "syn", "brat", "siostra", "rodzeństwo", "dziecko"].includes(String(edge.label));
+          }
+          return true;
         })
         .map((edge) => ({
           ...edge,
@@ -409,6 +453,17 @@ export function BookWorkspace({
   const selectedEdgeSource = selectedEdge ? nodes.find((node) => node.id === selectedEdge.source) : null;
   const selectedEdgeTarget = selectedEdge ? nodes.find((node) => node.id === selectedEdge.target) : null;
   const selectedRelationship = selectedEdgeSource?.data.relationships?.find((relationship) => relationship.targetNodeId === selectedEdgeTarget?.id);
+  const mapViews = [
+    { id: "map", label: "Wszystko", icon: GitBranch },
+    { id: "plot", label: "Fabuła", icon: BookOpen },
+    { id: "characters", label: "Postacie", icon: UsersRound },
+    { id: "relationships", label: "Relacje", icon: Heart },
+    { id: "family", label: "Rodzina", icon: UsersRound },
+    { id: "timeline", label: "Timeline", icon: Clock3 },
+    { id: "romance", label: "Romanse", icon: Heart },
+    { id: "secrets", label: "Sekrety", icon: EyeOff },
+    { id: "locations", label: "Lokacje", icon: MapPin }
+  ] as const;
 
   const exportMarkdown = () => {
     const markdown = exportProjectToMarkdown(project, nodes, edges);
@@ -458,6 +513,26 @@ export function BookWorkspace({
             <ToolbarButton icon={darkMode ? Sun : Moon} label={darkMode ? "Tryb jasny" : "Tryb ciemny"} onClick={() => setDarkMode((value) => !value)} />
           </div>
 
+          <div className="mt-8">
+            <p className="mb-3 text-xs font-medium uppercase tracking-[0.18em] text-ink/45 dark:text-paper/45">Widoki mapy</p>
+            <div className="grid grid-cols-2 gap-2">
+              {mapViews.map((view) => (
+                <button
+                  key={view.id}
+                  onClick={() => setViewMode(view.id)}
+                  className={`flex items-center gap-2 rounded-lg border px-2.5 py-2 text-xs transition ${
+                    viewMode === view.id
+                      ? "border-wine bg-wine/5 text-wine"
+                      : "border-ink/10 bg-white text-ink/65 hover:border-wine hover:text-wine dark:border-paper/10 dark:bg-[#242424] dark:text-paper/65"
+                  }`}
+                >
+                  <view.icon size={14} />
+                  {view.label}
+                </button>
+              ))}
+            </div>
+          </div>
+
           <div className="mt-8 rounded-lg border border-ink/10 bg-white p-3 dark:border-paper/10 dark:bg-[#242424]">
             <p className="mb-2 text-xs font-medium uppercase tracking-[0.18em] text-ink/45 dark:text-paper/45">Konto</p>
             <div className="space-y-2">
@@ -496,7 +571,7 @@ export function BookWorkspace({
             <div className="min-w-0 flex-1">
               <p className="truncate text-sm font-medium">{breadcrumb}</p>
               <p className="text-xs text-ink/45 dark:text-paper/45">
-                {viewMode === "relationships" ? "Mapa relacji postaci" : saveState === "saving" ? "Autosave..." : saveState === "saved" ? "Zapisano" : "Gotowe do pisania"}
+                {viewMode !== "map" ? `Widok: ${mapViews.find((view) => view.id === viewMode)?.label ?? "Mapa"}` : saveState === "saving" ? "Autosave..." : saveState === "saved" ? "Zapisano" : "Gotowe do pisania"}
               </p>
             </div>
             <button
@@ -591,13 +666,17 @@ export function BookWorkspace({
                   Zamknij
                 </button>
               </div>
-              <div className="mt-3 grid grid-cols-4 gap-2 text-xs">
-                <span>Zaufanie: {selectedRelationship?.trustLevel ?? "-"}</span>
-                <span>Napięcie: {selectedRelationship?.tensionLevel ?? "-"}</span>
-                <span>Konflikt: {selectedRelationship?.conflictLevel ?? "-"}</span>
-                <span>Bliskość: {selectedRelationship?.closenessLevel ?? "-"}</span>
-              </div>
-              {selectedRelationship?.notes && <p className="mt-3 text-sm text-ink/60 dark:text-paper/60">{selectedRelationship.notes}</p>}
+              {selectedRelationship && (
+                <div className="mt-4">
+                  <RelationshipProfilePanel
+                    source={selectedEdgeSource}
+                    target={selectedEdgeTarget}
+                    relationship={selectedRelationship}
+                    onUpdate={updateRelationship}
+                    onOpenCharacter={(nodeId) => openNode(nodeId, true)}
+                  />
+                </div>
+              )}
             </div>
           )}
         </section>
@@ -638,6 +717,17 @@ export function BookWorkspace({
             <ProjectConsistencyView
               nodes={nodes}
               edges={edges}
+              onBack={() => setViewMode("map")}
+              onOpenNode={(nodeId, large) => {
+                setViewMode("map");
+                openNode(nodeId, large);
+              }}
+            />
+          )}
+
+          {viewMode === "family" && (
+            <FamilyView
+              nodes={nodes}
               onBack={() => setViewMode("map")}
               onOpenNode={(nodeId, large) => {
                 setViewMode("map");

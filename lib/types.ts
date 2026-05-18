@@ -36,13 +36,34 @@ export type RelationshipType =
   | "ex"
   | "crush"
   | "przyjaciel"
+  | "ex-przyjaciel"
+  | "ex-przyjaciółka"
   | "najlepszy przyjaciel"
+  | "toxic friendship"
+  | "situationship"
   | "wróg"
   | "rywal"
   | "mentor"
   | "znajomy"
   | "członek paczki"
+  | "love interest"
+  | "emotionally dependent"
+  | "forbidden relationship"
   | "inna relacja";
+
+export type RelationshipTimelinePoint = {
+  id: string;
+  label: string;
+  trustLevel?: number;
+  tensionLevel?: number;
+  conflictLevel?: number;
+  closenessLevel?: number;
+  jealousyLevel?: number;
+  safetyLevel?: number;
+  dependencyLevel?: number;
+  obsessionLevel?: number;
+  notes?: string;
+};
 
 export type CharacterRelationship = {
   id: string;
@@ -54,10 +75,16 @@ export type CharacterRelationship = {
   tensionLevel?: number;
   conflictLevel?: number;
   closenessLevel?: number;
+  jealousyLevel?: number;
+  safetyLevel?: number;
+  dependencyLevel?: number;
+  obsessionLevel?: number;
+  powerDynamic?: string;
   description?: string;
   secrets?: string;
   importantScenes?: string;
   notes?: string;
+  timeline?: RelationshipTimelinePoint[];
   createdAt: string;
   updatedAt: string;
 };

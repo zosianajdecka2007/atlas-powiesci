@@ -4,6 +4,7 @@ import { motion } from "framer-motion";
 import { Check, Copy, Maximize2, Plus, RotateCcw, Trash2 } from "lucide-react";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { AccordionSection } from "@/components/accordion-section";
+import { AiStudioPanel } from "@/components/ai-studio-panel";
 import { CharacterRelationsPanel } from "@/components/character-relations-panel";
 import { FieldEditor } from "@/components/field-editor";
 import { ImageManager } from "@/components/image-manager";
@@ -228,6 +229,8 @@ export function DetailsSidebar({
               onChange={(images) => onUpdateImages(node.id, images)}
             />
           )}
+
+          {selectedTab?.id === "general" && <AiStudioPanel />}
 
           {node.data.type === "Postać" && selectedTab?.id === "relationships" && (
             <CharacterRelationsPanel

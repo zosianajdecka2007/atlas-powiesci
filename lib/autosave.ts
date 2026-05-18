@@ -141,9 +141,16 @@ export async function autosaveProject(payload: PersistedProject) {
       tension_level: relationship.tensionLevel ?? null,
       conflict_level: relationship.conflictLevel ?? null,
       closeness_level: relationship.closenessLevel ?? null,
+      jealousy_level: relationship.jealousyLevel ?? null,
+      safety_level: relationship.safetyLevel ?? null,
+      dependency_level: relationship.dependencyLevel ?? null,
+      obsession_level: relationship.obsessionLevel ?? null,
+      power_dynamic: relationship.powerDynamic ?? "",
       description: relationship.description ?? "",
       secrets: relationship.secrets ?? "",
-      notes: relationship.notes ?? ""
+      notes: relationship.notes ?? "",
+      important_scenes: relationship.importantScenes ?? "",
+      timeline: relationship.timeline ?? []
     }))
   );
 

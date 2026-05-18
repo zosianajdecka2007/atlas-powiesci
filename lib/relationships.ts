@@ -13,12 +13,19 @@ export const relationshipTypes: RelationshipType[] = [
   "ex",
   "crush",
   "przyjaciel",
+  "ex-przyjaciel",
+  "ex-przyjaciółka",
   "najlepszy przyjaciel",
+  "toxic friendship",
+  "situationship",
   "wróg",
   "rywal",
   "mentor",
   "znajomy",
   "członek paczki",
+  "love interest",
+  "emotionally dependent",
+  "forbidden relationship",
   "inna relacja"
 ];
 
@@ -35,12 +42,19 @@ const reverseMap: Record<RelationshipType, RelationshipType> = {
   ex: "ex",
   crush: "crush",
   przyjaciel: "przyjaciel",
+  "ex-przyjaciel": "ex-przyjaciel",
+  "ex-przyjaciółka": "ex-przyjaciółka",
   "najlepszy przyjaciel": "najlepszy przyjaciel",
+  "toxic friendship": "toxic friendship",
+  situationship: "situationship",
   wróg: "wróg",
   rywal: "rywal",
   mentor: "inna relacja",
   znajomy: "znajomy",
   "członek paczki": "członek paczki",
+  "love interest": "love interest",
+  "emotionally dependent": "emotionally dependent",
+  "forbidden relationship": "forbidden relationship",
   "inna relacja": "inna relacja"
 };
 
@@ -84,10 +98,7 @@ export function makeRelationship(
     targetName: targetNode.data.title,
     type,
     reverseType,
-    trustLevel: 5,
-    tensionLevel: 1,
-    conflictLevel: 1,
-    closenessLevel: 5,
+    timeline: [],
     createdAt: now,
     updatedAt: now
   };
@@ -96,9 +107,9 @@ export function makeRelationship(
 export function relationshipColor(type?: string) {
   if (!type) return "#6b7280";
   if (["matka", "ojciec", "córka", "syn", "brat", "siostra", "rodzeństwo", "dziecko"].includes(type)) return "#263247";
-  if (["partner", "ex", "crush"].includes(type)) return "#8f3147";
-  if (["przyjaciel", "najlepszy przyjaciel", "członek paczki", "znajomy"].includes(type)) return "#6f7f72";
-  if (["wróg", "rywal"].includes(type)) return "#b91c1c";
+  if (["partner", "ex", "crush", "love interest", "situationship", "forbidden relationship", "emotionally dependent"].includes(type)) return "#8f3147";
+  if (["przyjaciel", "ex-przyjaciel", "ex-przyjaciółka", "najlepszy przyjaciel", "członek paczki", "znajomy"].includes(type)) return "#6f7f72";
+  if (["wróg", "rywal", "toxic friendship"].includes(type)) return "#b91c1c";
   if (["mentor"].includes(type)) return "#7c3f58";
   return "#6b7280";
 }
