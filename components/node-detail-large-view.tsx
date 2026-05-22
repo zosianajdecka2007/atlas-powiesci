@@ -5,10 +5,12 @@ import { ArrowLeft, Check, Maximize2, Star } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import { AccordionSection } from "@/components/accordion-section";
 import { CharacterRelationsPanel } from "@/components/character-relations-panel";
+import { ChapterPlotGenerator } from "@/components/chapter-plot-generator";
 import { FieldEditor } from "@/components/field-editor";
 import { ImageManager } from "@/components/image-manager";
 import { accentColors, getSchemaForType, nodeTypes } from "@/lib/node-schema";
 import type { DetailValue, NodeImage, RelationshipType, StoryNode, StoryNodeData } from "@/lib/types";
+import type { GeneratedChapter } from "@/lib/chapter-plot";
 
 type NodeDetailLargeViewProps = {
   node: StoryNode;
@@ -20,6 +22,7 @@ type NodeDetailLargeViewProps = {
   onUpdateImages: (nodeId: string, images: NodeImage[]) => void;
   onConnectCharacter: (sourceId: string, targetName: string, type: RelationshipType, existingTargetId?: string, openAfterCreate?: boolean) => void;
   onOpenNode: (nodeId: string, large?: boolean) => void;
+  onCreateChapters: (sourceNodeId: string, chapters: GeneratedChapter[]) => void;
 };
 
 export function NodeDetailLargeView({
@@ -31,7 +34,8 @@ export function NodeDetailLargeView({
   onUpdateDetail,
   onUpdateImages,
   onConnectCharacter,
-  onOpenNode
+  onOpenNode,
+  onCreateChapters
 }: NodeDetailLargeViewProps) {
   const schema = useMemo(() => getSchemaForType(node.data.type), [node.data.type]);
   const [activeTab, setActiveTab] = useState(schema[0]?.id ?? "general");
@@ -199,6 +203,10 @@ export function NodeDetailLargeView({
             <motion.div key={`${node.id}-${selectedTab?.id}`} initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} className="space-y-5 pb-16">
               {selectedTab?.id === "photos" && (
                 <ImageManager nodeId={node.id} images={node.data.images ?? []} onChange={(images) => onUpdateImages(node.id, images)} />
+              )}
+
+              {selectedTab?.id === "ai-plot" && (
+                <ChapterPlotGenerator node={node} nodes={nodes} onCreateChapters={onCreateChapters} />
               )}
 
               {node.data.type === "Postać" && selectedTab?.id === "relationships" && (

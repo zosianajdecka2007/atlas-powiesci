@@ -44,6 +44,7 @@ import { accentColors, nodeTypes } from "@/lib/node-schema";
 import { findSimilarCharacters, getReverseRelationshipType, makeRelationship, relationshipColor } from "@/lib/relationships";
 import { seedEdges, seedNodes, seedProject } from "@/lib/seed-data";
 import type { BookProject, NodeImage, NodeType, RelationshipType, StoryEdge, StoryNode, StoryNodeData } from "@/lib/types";
+import type { GeneratedChapter } from "@/lib/chapter-plot";
 
 const flowNodeTypes = { storyNode: StoryNodeCard };
 
@@ -347,6 +348,69 @@ export function BookWorkspace({
       setSelectedNodeId(id);
     },
     [nodes, selectedNodeId]
+  );
+
+  const createChapterNodes = useCallback(
+    (sourceNodeId: string, chapters: GeneratedChapter[]) => {
+      const source = nodes.find((node) => node.id === sourceNodeId) ?? nodes[0];
+      if (!source || chapters.length === 0) return;
+      const now = new Date().toISOString();
+      const radius = 280;
+      const newNodes: StoryNode[] = chapters.map((chapter, index) => {
+        const angle = (Math.PI * 2 * index) / Math.max(1, chapters.length);
+        const id = `chapter-${crypto.randomUUID()}`;
+        return {
+          id,
+          type: "storyNode",
+          position: {
+            x: source.position.x + Math.cos(angle) * radius + 120,
+            y: source.position.y + Math.sin(angle) * radius + 120
+          },
+          data: {
+            title: `${chapter.number}. ${chapter.title}`,
+            type: "Rozdział",
+            description: chapter.goal,
+            notes: chapter.readerFeeling,
+            tags: ["rozdział", "AI fabuła"],
+            color: "#263247",
+            icon: "book",
+            createdAt: now,
+            updatedAt: now,
+            details: {
+              chapterNumber: chapter.number,
+              chapterTitle: chapter.title,
+              pov: chapter.pov,
+              place: chapter.place,
+              chapterGoal: chapter.goal,
+              plotFunction: chapter.plotFunction,
+              emotionalFunction: chapter.emotionalFunction,
+              externalConflict: chapter.externalConflict,
+              internalConflict: chapter.internalConflict,
+              romanticTension: chapter.romanticTension,
+              revealedSecret: chapter.revealedSecret,
+              openingScene: chapter.openingScene,
+              middleScene: chapter.middleScene,
+              endingScene: chapter.endingScene,
+              cliffhanger: chapter.cliffhanger,
+              readerFeeling: chapter.readerFeeling,
+              song: chapter.songOrVibe
+            },
+            images: []
+          }
+        };
+      });
+      const newEdges: StoryEdge[] = newNodes.map((node) => ({
+        id: `edge-${source.id}-${node.id}`,
+        source: source.id,
+        target: node.id,
+        label: "rozdział"
+      }));
+
+      setNodes((current) => [...current, ...newNodes]);
+      setEdges((current) => [...current, ...newEdges]);
+      setSelectedNodeId(newNodes[0]?.id ?? source.id);
+    },
+    [nodes]
   );
 
   const deleteNode = useCallback(
@@ -703,6 +767,7 @@ export function BookWorkspace({
                 onEditModeChange={changeEditMode}
                 onConnectCharacter={connectCharacter}
                 onOpenNode={openNode}
+                onCreateChapters={createChapterNodes}
                 onOpenLarge={() => {
                   changeEditMode("large");
                   setLargeViewOpen(true);
@@ -747,6 +812,7 @@ export function BookWorkspace({
               onUpdateImages={updateNodeImages}
               onConnectCharacter={connectCharacter}
               onOpenNode={openNode}
+              onCreateChapters={createChapterNodes}
             />
           )}
         </AnimatePresence>

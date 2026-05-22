@@ -505,6 +505,11 @@ export const sharedPhotosTab: TabSchema = {
   ]
 };
 
+export const sharedAiPlotTab: TabSchema = {
+  id: "ai-plot",
+  label: "AI fabuła rozdziałów"
+};
+
 export const defaultSchema: TabSchema[] = [
   {
     id: "general",
@@ -526,5 +531,6 @@ export const defaultSchema: TabSchema[] = [
 
 export function getSchemaForType(type: NodeType) {
   const schema = nodeTypeSchemas[type] ?? defaultSchema;
-  return schema.some((tab) => tab.id === "photos") ? schema : [...schema, sharedPhotosTab];
+  const withPhotos = schema.some((tab) => tab.id === "photos") ? schema : [...schema, sharedPhotosTab];
+  return withPhotos.some((tab) => tab.id === "ai-plot") ? withPhotos : [...withPhotos, sharedAiPlotTab];
 }

@@ -6,10 +6,12 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { AccordionSection } from "@/components/accordion-section";
 import { AiStudioPanel } from "@/components/ai-studio-panel";
 import { CharacterRelationsPanel } from "@/components/character-relations-panel";
+import { ChapterPlotGenerator } from "@/components/chapter-plot-generator";
 import { FieldEditor } from "@/components/field-editor";
 import { ImageManager } from "@/components/image-manager";
 import { accentColors, getSchemaForType, nodeTypes } from "@/lib/node-schema";
 import type { DetailValue, NodeImage, RelationshipType, StoryNode, StoryNodeData } from "@/lib/types";
+import type { GeneratedChapter } from "@/lib/chapter-plot";
 
 type DetailsSidebarProps = {
   node: StoryNode;
@@ -24,6 +26,7 @@ type DetailsSidebarProps = {
   onOpenLarge: () => void;
   onConnectCharacter: (sourceId: string, targetName: string, type: RelationshipType, existingTargetId?: string, openAfterCreate?: boolean) => void;
   onOpenNode: (nodeId: string, large?: boolean) => void;
+  onCreateChapters: (sourceNodeId: string, chapters: GeneratedChapter[]) => void;
 };
 
 export function DetailsSidebar({
@@ -38,7 +41,8 @@ export function DetailsSidebar({
   onEditModeChange,
   onOpenLarge,
   onConnectCharacter,
-  onOpenNode
+  onOpenNode,
+  onCreateChapters
 }: DetailsSidebarProps) {
   const schema = useMemo(() => getSchemaForType(node.data.type), [node.data.type]);
   const [activeTab, setActiveTab] = useState(schema[0]?.id ?? "general");
@@ -231,6 +235,10 @@ export function DetailsSidebar({
           )}
 
           {selectedTab?.id === "general" && <AiStudioPanel />}
+
+          {selectedTab?.id === "ai-plot" && (
+            <ChapterPlotGenerator node={node} nodes={nodes} onCreateChapters={onCreateChapters} />
+          )}
 
           {node.data.type === "Postać" && selectedTab?.id === "relationships" && (
             <CharacterRelationsPanel
